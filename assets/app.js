@@ -1,13 +1,15 @@
-// Surah Kopi - Interactive Ordering, Customizations, Delivery Calculator & QRIS System
+// Surah Kopi - Interactive Ordering, Customizations, Dynamic Map Search, Delivery Calculator & QRIS System
 
 const SURAH_CONFIG = {
-  phone: "6281234567890", // Ganti dengan nomor WhatsApp resmi Surah Kopi
+  phone: "628118143532", // Nomor WhatsApp Resmi Surah Kopi (08118143532)
   shopeeFoodUrl: "https://shopee.co.id/universal-link/now-food",
   instagramUrl: "https://www.instagram.com/surahkopi/",
   openHour: 9,
   closeHour: 21,
   timezoneOffset: 7, // WIB (UTC+7)
-  storeLocation: "Surah Kopi, Tangerang Selatan, Banten" // Origin Titik Jemput
+  storeName: "Surah Kopi",
+  storeAddress: "Surah Kopi, Tangerang Selatan, Banten",
+  storeCoords: { lat: -6.3039, lng: 106.7456 } // Titik asal kedai Surah Kopi (Tangerang Selatan)
 };
 
 // Official 8 Menu Items (All @ 18K)
@@ -110,27 +112,20 @@ const MENU_ITEMS = [
   }
 ];
 
-// Destination Presets in Tangerang Selatan & Surrounding Area
-const DESTINATION_PRESETS = [
-  { id: "ciputat", name: "Ciputat / Sekitar Kedai (1.5 km)", dist: 1.5, desc: "Pasar Ciputat, Cipayung, Jl. Menjangan" },
-  { id: "ciputat_timur", name: "Ciputat Timur / UIN / Pondok Ranji (3.0 km)", dist: 3.0, desc: "Kampus UIN, Stasiun Pondok Ranji, Rempoa" },
-  { id: "pamulang", name: "Pamulang / Unpam (4.5 km)", dist: 4.5, desc: "Unpam, Pamulang Square, Benda Baru" },
-  { id: "bintaro_9", name: "Bintaro Sektor 7 - 9 (5.5 km)", dist: 5.5, desc: "Bintaro Xchange, Fresh Market Sek. 9" },
-  { id: "pondok_aren", name: "Pondok Aren / Jurangmangu (6.0 km)", dist: 6.0, desc: "Pondok Betung, Jurangmangu Timur/Barat" },
-  { id: "bintaro_1_5", name: "Bintaro Sektor 1 - 5 (7.0 km)", dist: 7.0, desc: "Bintaro Plaza, Bintaro Sektor 1-5" },
-  { id: "lebak_bulus", name: "Lebak Bulus / Cilandak Jaksel (8.0 km)", dist: 8.0, desc: "Stasiun MRT Lebak Bulus, Poins Mall" },
-  { id: "bsd_serpong", name: "BSD City / Serpong (8.5 km)", dist: 8.5, desc: "AEON Mall BSD, The Breeze, Pasar Modern BSD" },
-  { id: "setu_muncul", name: "Setu / Puspitek / Muncul (9.0 km)", dist: 9.0, desc: "Kawasan Puspitek, Muncul, Babakan" },
-  { id: "alam_sutera", name: "Alam Sutera / Serpong Utara (12.0 km)", dist: 12.0, desc: "Mall @ Alam Sutera, Living World" },
-  { id: "gading_serpong", name: "Gading Serpong / Kelapa Dua (14.0 km)", dist: 14.0, desc: "Summarecon Mall Serpong, Scientia" },
-  { id: "custom", name: "Atur Jarak Manual (KM)", dist: 5.0, desc: "Tentukan jarak KM secara mandiri" }
-];
-
 // Cart State
 let cartItems = [];
 let pendingCustomItem = null;
 let customModalQty = 1;
-let currentCustomDistance = 5.0;
+
+// Location & Map State (Dynamic, NOT Hardcoded)
+let destinationCoords = { lat: -6.3150, lng: 106.7350 }; // Default destination
+let destinationAddressText = "";
+let calculatedDistanceKm = 3.5;
+let leafletMap = null;
+let originMarker = null;
+let destinationMarker = null;
+let routeLine = null;
+let searchDebounceTimer = null;
 
 // Format Currency
 function formatRupiah(number) {
@@ -156,6 +151,37 @@ function calculateDeliveryFee(deliveryType, distanceKm) {
     return Math.round((14000 + ((d - 4) * 2600)) / 1000) * 1000;
   }
   return 0;
+}
+
+// Haversine straight line distance formula (fallback)
+function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return Math.round(R * c * 1.35 * 10) / 10; // 1.35 driving road factor
+}
+
+// Fetch Driving Road Distance from OSRM (Live real-time routing API)
+async function fetchRoadDistance(origin, dest) {
+  try {
+    const url = `https://router.project-osrm.org/route/v1/driving/${origin.lng},${origin.lat};${dest.lng},${dest.lat}?overview=full&geometries=geojson`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
+    const data = await res.json();
+    if (data.routes && data.routes.length > 0) {
+      const roadKm = Math.round((data.routes[0].distance / 1000) * 10) / 10;
+      return { distanceKm: Math.max(1.0, roadKm), coordinates: data.routes[0].geometry.coordinates };
+    }
+  } catch (err) {
+    console.warn("OSRM routing unavailable, using Haversine calculation:", err);
+  }
+  // Fallback to Haversine
+  const fallbackKm = calculateHaversineDistance(origin.lat, origin.lng, dest.lat, dest.lng);
+  return { distanceKm: Math.max(1.0, fallbackKm), coordinates: null };
 }
 
 // Operational Status Indicator
@@ -322,11 +348,9 @@ function handlePackagingChange() {
   const bottleNotice = document.getElementById("bottle-ice-notice");
 
   if (selectedPackaging.includes("Botol Ready to Go")) {
-    // Hide Ice options for Botol Ready to Go
     if (iceContainer) iceContainer.classList.add("hidden");
     if (bottleNotice) bottleNotice.classList.remove("hidden");
   } else {
-    // Show Ice options for Cup Standar
     if (iceContainer) iceContainer.classList.remove("hidden");
     if (bottleNotice) bottleNotice.classList.add("hidden");
   }
@@ -354,7 +378,6 @@ function confirmAddToCart() {
     ? (document.querySelector('input[name="optSugar"]:checked')?.value || "Normal Sugar")
     : "No Sugar (Default)";
 
-  // If Botol Ready to Go, ice is automatically NO ICE (cold chilled in sealed bottle)
   let ice = "Normal Ice";
   if (packaging.includes("Botol Ready to Go")) {
     ice = "Tanpa Es (Chilled Botol Segar)";
@@ -447,47 +470,240 @@ function updateCartBadge() {
   }
 }
 
-// ================= CART & DELIVERY ESTIMATOR MODAL =================
-function populateDestinationDropdown() {
-  const select = document.getElementById("delivery-destination-select");
-  if (!select) return;
+// ================= DYNAMIC MAP & SEARCH (GOOGLE MAPS ROUTING) =================
+function initLeafletMap() {
+  const mapElement = document.getElementById("map-container");
+  if (!mapElement) return;
 
-  select.innerHTML = DESTINATION_PRESETS.map(preset => {
-    return `<option value="${preset.id}">${preset.name} &bull; ${preset.desc}</option>`;
-  }).join("");
+  if (!leafletMap && typeof L !== "undefined") {
+    // Initialize Leaflet Map centered between Surah Kopi and destination
+    leafletMap = L.map('map-container').setView([SURAH_CONFIG.storeCoords.lat, SURAH_CONFIG.storeCoords.lng], 13);
+
+    // OpenStreetMap dark-style tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap'
+    }).addTo(leafletMap);
+
+    // Custom Icons
+    const storeIcon = L.divIcon({
+      html: `<div style="background:#000;color:#fff;border:2px solid #fff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 4px 10px rgba(0,0,0,0.6);">☕</div>`,
+      className: '',
+      iconSize: [32, 32],
+      iconAnchor: [16, 16]
+    });
+
+    const destIcon = L.divIcon({
+      html: `<div style="background:#fff;color:#000;border:2px solid #000;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 4px 10px rgba(0,0,0,0.6);">📍</div>`,
+      className: '',
+      iconSize: [32, 32],
+      iconAnchor: [16, 32]
+    });
+
+    // Store (Origin) Marker
+    originMarker = L.marker([SURAH_CONFIG.storeCoords.lat, SURAH_CONFIG.storeCoords.lng], { icon: storeIcon })
+      .addTo(leafletMap)
+      .bindPopup(`<b>${SURAH_CONFIG.storeName} (Titik Jemput)</b><br>${SURAH_CONFIG.storeAddress}`);
+
+    // Destination Marker (Draggable!)
+    destinationMarker = L.marker([destinationCoords.lat, destinationCoords.lng], { icon: destIcon, draggable: true })
+      .addTo(leafletMap)
+      .bindPopup(`<b>Titik Antar Anda</b><br><small>Geser pin ini untuk lokasi presisi</small>`);
+
+    // Drag event on destination marker
+    destinationMarker.on('dragend', async function(e) {
+      const pos = e.target.getLatLng();
+      destinationCoords = { lat: pos.lat, lng: pos.lng };
+      await updateDistanceAndRoute();
+      // Reverse geocode to get street name
+      reverseGeocodeCoords(pos.lat, pos.lng);
+    });
+
+    // Map click sets destination
+    leafletMap.on('click', async function(e) {
+      destinationCoords = { lat: e.latlng.lat, lng: e.latlng.lng };
+      destinationMarker.setLatLng(e.latlng);
+      await updateDistanceAndRoute();
+      reverseGeocodeCoords(e.latlng.lat, e.latlng.lng);
+    });
+
+    updateDistanceAndRoute();
+  } else if (leafletMap) {
+    setTimeout(() => {
+      leafletMap.invalidateSize();
+    }, 200);
+  }
 }
 
-function handleDestinationChange() {
-  const select = document.getElementById("delivery-destination-select");
-  const customKmInput = document.getElementById("custom-km-container");
-  if (!select) return;
+// Update distance & route line on map
+async function updateDistanceAndRoute() {
+  const result = await fetchRoadDistance(SURAH_CONFIG.storeCoords, destinationCoords);
+  calculatedDistanceKm = result.distanceKm;
 
-  if (select.value === "custom") {
-    if (customKmInput) customKmInput.classList.remove("hidden");
-  } else {
-    if (customKmInput) customKmInput.classList.add("hidden");
-    const preset = DESTINATION_PRESETS.find(p => p.id === select.value);
-    if (preset) {
-      currentCustomDistance = preset.dist;
+  if (leafletMap) {
+    // Draw route line
+    if (routeLine) {
+      leafletMap.removeLayer(routeLine);
+    }
+
+    if (result.coordinates) {
+      const latlngs = result.coordinates.map(c => [c[1], c[0]]);
+      routeLine = L.polyline(latlngs, { color: '#ffffff', weight: 4, opacity: 0.9, dashArray: '6, 8' }).addTo(leafletMap);
+      leafletMap.fitBounds(routeLine.getBounds(), { padding: [30, 30] });
+    } else {
+      routeLine = L.polyline([
+        [SURAH_CONFIG.storeCoords.lat, SURAH_CONFIG.storeCoords.lng],
+        [destinationCoords.lat, destinationCoords.lng]
+      ], { color: '#ffffff', weight: 3, opacity: 0.7, dashArray: '5, 5' }).addTo(leafletMap);
+      leafletMap.fitBounds(routeLine.getBounds(), { padding: [30, 30] });
     }
   }
+
+  // Update Google Maps Link
+  updateGoogleMapsLink();
   calculateOrderTotals();
 }
 
-function handleManualKmInput(val) {
-  const km = parseFloat(val);
-  if (!isNaN(km) && km > 0) {
-    currentCustomDistance = km;
-    calculateOrderTotals();
+// Generate Google Maps Directions URL (Origin to Destination)
+function getGoogleMapsRouteUrl() {
+  const originStr = encodeURIComponent(SURAH_CONFIG.storeAddress);
+  const destStr = destinationAddressText 
+    ? encodeURIComponent(destinationAddressText) 
+    : `${destinationCoords.lat},${destinationCoords.lng}`;
+  return `https://www.google.com/maps/dir/?api=1&origin=${originStr}&destination=${destStr}&travelmode=driving`;
+}
+
+function updateGoogleMapsLink() {
+  const gmapsBtn = document.getElementById("gmaps-route-btn");
+  if (gmapsBtn) {
+    gmapsBtn.href = getGoogleMapsRouteUrl();
   }
 }
 
+// Search Address via OpenStreetMap Nominatim (Live Geocoding)
+function handleAddressSearchInput(query) {
+  clearTimeout(searchDebounceTimer);
+  const dropdown = document.getElementById("search-results-dropdown");
+  if (!dropdown) return;
+
+  if (!query || query.trim().length < 3) {
+    dropdown.classList.add("hidden");
+    return;
+  }
+
+  searchDebounceTimer = setTimeout(async () => {
+    try {
+      dropdown.innerHTML = `<div class="p-3 text-xs text-neutral-400 font-mono">Mencari lokasi di Google Maps & OSM...</div>`;
+      dropdown.classList.remove("hidden");
+
+      // Query Nominatim with focus on Tangerang Selatan / Jabodetabek area via viewbox
+      let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=id&viewbox=106.60,-6.15,106.90,-6.42&limit=5&addressdetails=1`;
+      let res = await fetch(url, { headers: { 'User-Agent': 'SurahKopiDelivery/1.0' } });
+      let places = await res.json();
+
+      // Fallback if empty: try appending Tangerang Selatan
+      if ((!places || places.length === 0) && !query.toLowerCase().includes("tangerang")) {
+        url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ", Tangerang Selatan")}&countrycodes=id&limit=5&addressdetails=1`;
+        res = await fetch(url, { headers: { 'User-Agent': 'SurahKopiDelivery/1.0' } });
+        places = await res.json();
+      }
+
+      if (places && places.length > 0) {
+        dropdown.innerHTML = places.map(p => {
+          const lat = parseFloat(p.lat);
+          const lon = parseFloat(p.lon);
+          return `
+            <div class="autocomplete-item text-xs font-mono text-neutral-200" onclick="selectSearchResult(${lat}, ${lon}, '${p.display_name.replace(/'/g, "\\'")}')">
+              <strong class="text-white block font-sans">${p.name || p.display_name.split(",")[0]}</strong>
+              <span class="text-[10px] text-neutral-400 block truncate">${p.display_name}</span>
+            </div>
+          `;
+        }).join("");
+      } else {
+        dropdown.innerHTML = `<div class="p-3 text-xs text-neutral-500 font-mono">Lokasi tidak ditemukan. Coba ketik nama jalan / komplek / kelurahan.</div>`;
+      }
+    } catch (e) {
+      console.warn("Search geocoding error:", e);
+      dropdown.classList.add("hidden");
+    }
+  }, 450);
+}
+
+// Select item from autocomplete
+async function selectSearchResult(lat, lon, displayName) {
+  const dropdown = document.getElementById("search-results-dropdown");
+  const searchInput = document.getElementById("address-search-input");
+  const fullAddressInput = document.getElementById("cust-address");
+
+  if (dropdown) dropdown.classList.add("hidden");
+  if (searchInput) searchInput.value = displayName.split(",").slice(0, 3).join(",");
+  if (fullAddressInput && !fullAddressInput.value) {
+    fullAddressInput.value = displayName;
+  }
+
+  destinationCoords = { lat: lat, lng: lon };
+  destinationAddressText = displayName;
+
+  if (destinationMarker) {
+    destinationMarker.setLatLng([lat, lon]);
+  }
+
+  await updateDistanceAndRoute();
+}
+
+// Reverse Geocode (get address name when user moves map pin)
+async function reverseGeocodeCoords(lat, lon) {
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
+    const res = await fetch(url, { headers: { 'User-Agent': 'SurahKopiDelivery/1.0' } });
+    const data = await res.json();
+    if (data && data.display_name) {
+      destinationAddressText = data.display_name;
+      const searchInput = document.getElementById("address-search-input");
+      if (searchInput) {
+        searchInput.value = data.display_name.split(",").slice(0, 3).join(",");
+      }
+      updateGoogleMapsLink();
+    }
+  } catch (err) {
+    console.warn("Reverse geocode failed:", err);
+  }
+}
+
+// Use GPS Location of user
+function useCurrentGpsLocation() {
+  if (!navigator.geolocation) {
+    alert("Perangkat Anda tidak mendukung fitur lokasi GPS.");
+    return;
+  }
+
+  showToast("Mengambil lokasi GPS Anda...");
+
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      destinationCoords = { lat, lng };
+
+      if (destinationMarker) {
+        destinationMarker.setLatLng([lat, lng]);
+      }
+      await updateDistanceAndRoute();
+      await reverseGeocodeCoords(lat, lng);
+      showToast("Lokasi GPS berhasil diterapkan!");
+    },
+    (err) => {
+      alert("Gagal mengakses GPS: " + err.message + ". Silakan cari alamat di kolom pencarian.");
+    },
+    { enableHighAccuracy: true, timeout: 8000 }
+  );
+}
+
+// ================= CART & CHECKOUT MODAL =================
 function openCartModal() {
   const modal = document.getElementById("cart-modal");
   const list = document.getElementById("cart-modal-items");
   if (!modal || !list) return;
-
-  populateDestinationDropdown();
 
   if (cartItems.length === 0) {
     list.innerHTML = `
@@ -538,6 +754,11 @@ function openCartModal() {
 
   modal.classList.remove("hidden");
   modal.classList.add("flex");
+
+  // Initialize or re-size map inside modal
+  setTimeout(() => {
+    initLeafletMap();
+  }, 150);
 }
 
 function closeCartModal() {
@@ -547,75 +768,61 @@ function closeCartModal() {
   modal.classList.remove("flex");
 }
 
-// Calculate Order Totals with Official GoSend / Grab Formulas
+// Calculate Order Totals with Live Road Distance
 function calculateOrderTotals() {
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.qty), 0);
   const deliveryType = document.querySelector('input[name="deliveryMethod"]:checked')?.value || "gosend";
 
-  // Determine Distance
-  const destSelect = document.getElementById("delivery-destination-select");
-  let distanceKm = 1.5;
-  let destinationName = "Ciputat / Sekitar Kedai";
-
-  if (destSelect) {
-    if (destSelect.value === "custom") {
-      const customInput = document.getElementById("custom-km-input");
-      distanceKm = parseFloat(customInput?.value) || currentCustomDistance || 5.0;
-      destinationName = `Tujuan Kustom (${distanceKm} km)`;
-    } else {
-      const preset = DESTINATION_PRESETS.find(p => p.id === destSelect.value);
-      if (preset) {
-        distanceKm = preset.dist;
-        destinationName = preset.name;
-      }
-    }
-  }
-
-  // Calculate Rate
-  const deliveryFee = calculateDeliveryFee(deliveryType, distanceKm);
+  // Calculate Rate based on dynamic road distance
+  const deliveryFee = calculateDeliveryFee(deliveryType, calculatedDistanceKm);
   const grandTotal = subtotal + deliveryFee;
 
   // Update Elements
   const subtotalEl = document.getElementById("cart-subtotal");
   const feeEl = document.getElementById("cart-delivery-fee");
   const totalEl = document.getElementById("cart-grand-total");
+  const distanceBadge = document.getElementById("live-distance-badge");
   const formulaInfoEl = document.getElementById("delivery-formula-info");
 
   if (subtotalEl) subtotalEl.textContent = formatRupiah(subtotal);
   if (feeEl) feeEl.textContent = deliveryType === "pickup" ? "Gratis (Pick-up)" : formatRupiah(deliveryFee);
   if (totalEl) totalEl.textContent = formatRupiah(grandTotal);
+  if (distanceBadge) distanceBadge.textContent = `${calculatedDistanceKm} km`;
 
   if (formulaInfoEl) {
     if (deliveryType === "pickup") {
-      formulaInfoEl.textContent = "Pengambilan mandiri di kedai Surah Kopi (Tanpa ongkir).";
+      formulaInfoEl.textContent = "Ambil mandiri di kedai Surah Kopi (Tanpa ongkir).";
     } else if (deliveryType === "gosend") {
-      formulaInfoEl.textContent = `Tarif GoSend: Tarif dasar min. 0-4km = Rp 15.000, km berikutnya Rp 2.800/km (Jarak: ${distanceKm} km).`;
+      formulaInfoEl.textContent = `Tarif GoSend: Rp 15.000 (0-4 km) + Rp 2.800/km berikutnya. (Jarak rute: ${calculatedDistanceKm} km).`;
     } else if (deliveryType === "grab") {
-      formulaInfoEl.textContent = `Tarif GrabExpress: Tarif dasar min. 0-4km = Rp 14.000, km berikutnya Rp 2.600/km (Jarak: ${distanceKm} km).`;
+      formulaInfoEl.textContent = `Tarif GrabExpress: Rp 14.000 (0-4 km) + Rp 2.600/km berikutnya. (Jarak rute: ${calculatedDistanceKm} km).`;
     }
   }
 
-  return { subtotal, deliveryFee, grandTotal, deliveryType, distanceKm, destinationName };
+  return { subtotal, deliveryFee, grandTotal, deliveryType, distanceKm: calculatedDistanceKm };
 }
 
 // Toggle Delivery Method (GoSend, Grab, Pickup)
 function handleDeliveryChange() {
   const deliveryType = document.querySelector('input[name="deliveryMethod"]:checked')?.value || "gosend";
   const addressContainer = document.getElementById("address-field-container");
-  const destinationContainer = document.getElementById("destination-selector-container");
+  const mapSection = document.getElementById("map-delivery-section");
 
   if (deliveryType === "pickup") {
     if (addressContainer) addressContainer.classList.add("hidden");
-    if (destinationContainer) destinationContainer.classList.add("hidden");
+    if (mapSection) mapSection.classList.add("hidden");
   } else {
     if (addressContainer) addressContainer.classList.remove("hidden");
-    if (destinationContainer) destinationContainer.classList.remove("hidden");
+    if (mapSection) mapSection.classList.remove("hidden");
+    setTimeout(() => {
+      if (leafletMap) leafletMap.invalidateSize();
+    }, 150);
   }
 
   calculateOrderTotals();
 }
 
-// ================= QRIS MODAL LOGIC (FIXED CLOSE & WORKS ANYTIME) =================
+// ================= QRIS MODAL LOGIC (EASY CLOSE & ALWAYS WORKS) =================
 function openQrisModal() {
   const { subtotal, deliveryFee, grandTotal } = calculateOrderTotals();
   
@@ -651,18 +858,19 @@ function checkoutWhatsApp() {
     return;
   }
 
-  const { subtotal, deliveryFee, grandTotal, deliveryType, distanceKm, destinationName } = calculateOrderTotals();
+  const { subtotal, deliveryFee, grandTotal, deliveryType, distanceKm } = calculateOrderTotals();
   const customerName = document.getElementById("cust-name")?.value.trim() || "Pelanggan";
-  const customerAddress = document.getElementById("cust-address")?.value.trim() || "";
+  const customerAddress = document.getElementById("cust-address")?.value.trim() || destinationAddressText || "";
   const globalNote = document.getElementById("cust-global-note")?.value.trim() || "-";
 
   if (deliveryType !== "pickup" && !customerAddress) {
-    alert("Silakan masukkan Alamat Lengkap Pengiriman untuk kurir GoSend / Grab.");
+    alert("Silakan masukkan Alamat Lengkap Pengiriman atau cari di peta untuk kurir GoSend / Grab.");
     document.getElementById("cust-address")?.focus();
     return;
   }
 
   const courierName = deliveryType === "gosend" ? "🛵 GoSend Instant (Gojek)" : deliveryType === "grab" ? "🛵 GrabExpress Instant (Grab)" : "🛍️ Ambil Sendiri di Kedai (Pick-up)";
+  const gmapsUrl = getGoogleMapsRouteUrl();
 
   let lines = [];
   cartItems.forEach((item, idx) => {
@@ -684,7 +892,7 @@ function checkoutWhatsApp() {
 
 Nama Pemesan: ${customerName}
 Metode Pengiriman: ${courierName}
-${deliveryType !== "pickup" ? `Titik Asal: ${SURAH_CONFIG.storeLocation}\nWilayah Tujuan: ${destinationName} (~${distanceKm} km)\nAlamat Lengkap: ${customerAddress}\n` : ''}Catatan: ${globalNote}
+${deliveryType !== "pickup" ? `Titik Asal: ${SURAH_CONFIG.storeAddress}\nAlamat Pengantaran: ${customerAddress}\nEstimasi Jarak Rute: ~${distanceKm} km\nLink Rute Google Maps:\n${gmapsUrl}\n` : ''}Catatan: ${globalNote}
 
 *Rincian Menu:*
 ${lines.join("\n")}
@@ -703,7 +911,7 @@ Mohon konfirmasi pesanan dan proses pengiriman kurir. Terima kasih! 🙏`;
   closeCartModal();
 }
 
-// Simple Toast Notification
+// Toast
 function showToast(message) {
   let toast = document.getElementById("toast-notification");
   if (!toast) {
@@ -726,7 +934,7 @@ function showToast(message) {
   }, 2200);
 }
 
-// Keydown listener to close modals with ESC
+// Global Keydown listener for ESC key
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
     closeCustomizeModal();
@@ -735,11 +943,19 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
+// Close search dropdown on click outside
+document.addEventListener("click", (e) => {
+  const searchInput = document.getElementById("address-search-input");
+  const dropdown = document.getElementById("search-results-dropdown");
+  if (dropdown && searchInput && !searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+    dropdown.classList.add("hidden");
+  }
+});
+
 // Initialize on DOM load
 document.addEventListener("DOMContentLoaded", () => {
   checkStoreStatus();
   renderMenu("all");
   updateCartBadge();
-  populateDestinationDropdown();
   setInterval(checkStoreStatus, 60000);
 });

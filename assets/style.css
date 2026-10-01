@@ -1,4 +1,4 @@
-/* Surah Kopi - Modern Monochrome Layout with Smooth Menu Animations */
+/* Surah Kopi - Modern Monochrome Layout with Smooth Menu Animations & Dynamic Maps */
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 :root {
@@ -11,7 +11,6 @@
   --text-secondary: #999999;
   --text-tertiary: #666666;
   --accent-white: #FFFFFF;
-  --accent-glow: rgba(255, 255, 255, 0.15);
 }
 
 * {
@@ -50,13 +49,13 @@ body {
   background: #444444;
 }
 
-/* Subtle Background Ambient Lights */
+/* Ambient Grid Pattern */
 .bg-ambient-grid {
   background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
   background-size: 28px 28px;
 }
 
-/* Smooth Interactive Menu Cards */
+/* Menu Cards with Smooth Animations */
 .menu-card {
   background: #0d0d0d;
   border: 1px solid rgba(255, 255, 255, 0.09);
@@ -72,7 +71,7 @@ body {
   box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.8), 0 0 25px rgba(255, 255, 255, 0.06);
 }
 
-/* Drink Photo Treatment - VIBRANT & DELICIOUS (NOT Grayed out) */
+/* Vibrant Food Photography */
 .drink-photo-wrapper {
   overflow: hidden;
   position: relative;
@@ -80,7 +79,7 @@ body {
 }
 
 .drink-photo {
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s ease;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   object-fit: cover;
   width: 100%;
   height: 100%;
@@ -90,7 +89,7 @@ body {
   transform: scale(1.08);
 }
 
-/* Smooth Badges */
+/* Badges */
 .badge-ayat {
   background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(8px);
@@ -111,7 +110,7 @@ body {
   text-transform: uppercase;
 }
 
-/* Smooth Button Ripple & Hovers */
+/* Button Classes */
 .btn-primary-white {
   background-color: #FFFFFF;
   color: #000000;
@@ -162,26 +161,12 @@ body {
 @keyframes scaleUp {
   from {
     opacity: 0;
-    transform: scale(0.95) translateY(10px);
+    transform: scale(0.96) translateY(8px);
   }
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
   }
-}
-
-/* Pulse Glow Keyframes */
-@keyframes subtleGlow {
-  0%, 100% {
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
-  }
-  50% {
-    box-shadow: 0 0 30px rgba(255, 255, 255, 0.15);
-  }
-}
-
-.glow-card {
-  animation: subtleGlow 4s infinite ease-in-out;
 }
 
 /* Radio Chip Selector */
@@ -202,7 +187,7 @@ body {
   border-color: rgba(255, 255, 255, 0.4);
 }
 
-/* QRIS Floating Animation */
+/* QRIS Card */
 .qris-card {
   background: #FFFFFF;
   border-radius: 1.5rem;
@@ -212,4 +197,45 @@ body {
 
 .qris-card:hover {
   transform: translateY(-4px);
+}
+
+/* Interactive Map Styling */
+#map-container {
+  height: 240px;
+  width: 100%;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  overflow: hidden;
+  z-index: 10;
+}
+
+/* Dark mode map tile styling */
+.leaflet-tile {
+  filter: brightness(0.7) invert(1) contrast(1.4) hue-rotate(200deg) saturate(0.3);
+}
+
+/* Autocomplete Suggestion Dropdown */
+.autocomplete-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #111111;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.75rem;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 60;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.8);
+}
+
+.autocomplete-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background 0.15s ease;
+}
+
+.autocomplete-item:hover {
+  background: rgba(255, 255, 255, 0.1);
 }

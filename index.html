@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SURAH KOPI | All Menu @ 18K - Delivery GoSend & GrabExpress</title>
-  <meta name="description" content="Surah Kopi Tangerang Selatan. Pesan online via WhatsApp, ShopeeFood, GoSend, dan GrabExpress. Menu Surah Ayat 1-8 serba 18K. Kemasan Botol Ready to Go tanpa es, kustomisasi gula & es cup.">
+  <meta name="description" content="Surah Kopi Tangerang Selatan. Pesan online via WhatsApp, ShopeeFood, GoSend, dan GrabExpress. Menu Surah Ayat 1-8 serba 18K. Kemasan Botol Ready to Go tanpa es, rute dinamis Google Maps.">
   <link rel="icon" type="image/jpeg" href="assets/logo.jpg">
   
   <!-- Tailwind CSS CDN -->
@@ -23,6 +23,10 @@
     }
   </script>
 
+  <!-- Leaflet Map CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
   <!-- Custom Stylesheet -->
   <link rel="stylesheet" href="assets/style.css">
 </head>
@@ -40,9 +44,8 @@
       </div>
       <div class="flex items-center gap-3">
         <div class="store-status-badge"></div>
-        <a href="https://www.instagram.com/surahkopi/" target="_blank" rel="noopener noreferrer" class="font-mono text-neutral-400 hover:text-white transition-colors text-xs flex items-center gap-1">
-          <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-          <span>@surahkopi</span>
+        <a href="https://wa.me/628118143532" target="_blank" rel="noopener noreferrer" class="font-mono text-neutral-300 hover:text-white transition-colors text-xs flex items-center gap-1">
+          <span>WA: 0811-8143-532</span>
         </a>
       </div>
     </div>
@@ -65,7 +68,7 @@
       <!-- Desktop Nav Links -->
       <nav class="hidden md:flex items-center gap-7 text-xs font-mono font-medium tracking-wider text-neutral-400">
         <a href="#menu" class="hover:text-white transition-colors">KATALOG (8 AYAT)</a>
-        <a href="#ongkir" class="hover:text-white transition-colors">ESTIMASI ONGKIR</a>
+        <a href="#ongkir" class="hover:text-white transition-colors">TARIF ONGKIR</a>
         <a href="#qris-section" class="hover:text-white transition-colors">PEMBAYARAN QRIS</a>
         <a href="https://shopee.co.id/universal-link/now-food" target="_blank" class="hover:text-white transition-colors">SHOPEEFOOD</a>
       </nav>
@@ -103,13 +106,13 @@
       </h1>
 
       <p class="text-neutral-400 text-sm sm:text-lg leading-relaxed max-w-2xl mx-auto font-light">
-        Selamat datang di <strong>Surah Kopi</strong>. Nikmati 8 racikan istimewa dari <strong>Surah Ayat 1 &ndash; 8</strong> serba <strong>Rp 18.000 (18K)</strong>. Pilih kemasan <em>Cup Standar</em> (bisa request es/gula) atau <em>Kemasan Botol Ready-to-Go</em> (disajikan dingin rapat tanpa es, aman diantar kurir).
+        Selamat datang di <strong>Surah Kopi</strong>. Nikmati 8 racikan istimewa dari <strong>Surah Ayat 1 &ndash; 8</strong> serba <strong>Rp 18.000 (18K)</strong>. Cari alamat tujuan langsung di peta Google Maps untuk hitung ongkir otomatis via GoSend &amp; GrabExpress.
       </p>
 
       <!-- Highlights Box -->
       <div class="inline-flex flex-wrap items-center justify-center gap-3 p-1.5 rounded-2xl border border-white/15 bg-neutral-950/80 backdrop-blur">
         <div class="px-4 py-2 text-xs font-mono text-neutral-300 flex items-center gap-2">
-          <span>🛵</span> GoSend &amp; GrabExpress Auto-Hitung
+          <span>🗺️</span> Cek Rute Peta Google Maps
         </div>
         <div class="px-4 py-2 text-xs font-mono text-neutral-300 flex items-center gap-2 border-x border-white/10">
           <span>🧴</span> Botol Ready to Go (Tanpa Es &bull; Dingin)
@@ -185,7 +188,7 @@
           Ketentuan Tarif Resmi GoSend &amp; GrabExpress
         </h2>
         <p class="text-neutral-400 text-xs sm:text-sm font-light">
-          Penjemputan dari <strong>Surah Kopi Tangerang Selatan (Jl. Menjangan / Ciputat)</strong> ke wilayah tujuan Anda.
+          Penjemputan dari <strong>Surah Kopi Tangerang Selatan (Jl. Menjangan / Ciputat)</strong> ke alamat tujuan Anda.
         </p>
       </div>
 
@@ -200,7 +203,7 @@
           <ul class="text-xs text-neutral-300 font-sans space-y-2 pt-2 border-t border-white/10">
             <li>&bull; <strong>Tarif Dasar Minimum (0 - 4 km)</strong>: Rp 15.000</li>
             <li>&bull; <strong>Tarif per KM berikutnya (> 4 km)</strong>: +Rp 2.800 / km</li>
-            <li>&bull; Waktu antar instan langsung dari barista ke alamat Anda</li>
+            <li>&bull; Dihitung otomatis sesuai rute jalan raya Google Maps &amp; OSRM</li>
           </ul>
         </div>
 
@@ -214,19 +217,19 @@
           <ul class="text-xs text-neutral-300 font-sans space-y-2 pt-2 border-t border-white/10">
             <li>&bull; <strong>Tarif Dasar Minimum (0 - 4 km)</strong>: Rp 14.000</li>
             <li>&bull; <strong>Tarif per KM berikutnya (> 4 km)</strong>: +Rp 2.600 / km</li>
-            <li>&bull; Pengiriman langsung menggunakan driver Grab motor terdekat</li>
+            <li>&bull; Estimasi jarak nyata tanpa hardcode lokasi</li>
           </ul>
         </div>
       </div>
 
       <!-- Quick Delivery Helper CTA -->
       <div class="p-6 rounded-2xl border border-white/15 bg-neutral-900/90 text-center space-y-3 max-w-xl mx-auto">
-        <h4 class="font-bold text-white text-sm font-heading">Cek Biaya ke Alamat Anda Sekarang</h4>
+        <h4 class="font-bold text-white text-sm font-heading">Cari Alamat Rumah / Kantor Anda di Peta</h4>
         <p class="text-neutral-400 text-xs font-sans">
-          Buka keranjang untuk memilih wilayah tujuan pengantaran Anda (Ciputat, Pamulang, Bintaro, BSD, dll.). Ongkir otomatis dihitung dan dimasukkan ke total tagihan.
+          Buka keranjang pesanan untuk mengetik alamat atau menggeser pin lokasi di peta interaktif. Ongkos kirim otomatis dikalkulasikan secara akurat.
         </p>
         <button onclick="openCartModal()" class="px-5 py-2.5 rounded-xl btn-primary-white text-xs font-heading font-extrabold uppercase tracking-wider">
-          Buka Keranjang &amp; Hitung Ongkir
+          Buka Keranjang &amp; Cek Peta
         </button>
       </div>
     </div>
@@ -242,7 +245,7 @@
           Scan QRIS Resmi Surah Kopi
         </h2>
         <p class="text-neutral-400 text-xs sm:text-sm font-light">
-          Satu QRIS untuk semua aplikasi perbankan (BCA, Mandiri, BRI, BNI) dan dompet digital (GoPay, OVO, ShopeePay, Dana, LinkAja).
+          Satu QRIS untuk semua perbankan (BCA, Mandiri, BRI, BNI) dan dompet digital (GoPay, OVO, ShopeePay, Dana, LinkAja).
         </p>
       </div>
 
@@ -286,7 +289,7 @@
               <span class="w-7 h-7 rounded-lg bg-white text-black font-extrabold flex items-center justify-center flex-shrink-0">3</span>
               <div>
                 <strong class="text-white block font-sans text-sm">Kirim Bukti Pembayaran ke WhatsApp</strong>
-                <span class="text-neutral-400 font-sans">Kirimkan bukti bayar ke nomor WhatsApp kedai agar pesanan langsung disiapkan barista &amp; dipanggilkan driver.</span>
+                <span class="text-neutral-400 font-sans">Kirimkan bukti bayar ke nomor WhatsApp <strong>0811-8143-532</strong> agar pesanan segera disiapkan barista &amp; dipanggilkan driver.</span>
               </div>
             </div>
           </div>
@@ -314,7 +317,7 @@
         </div>
         <div>
           <span class="font-heading font-extrabold text-white text-sm block">SURAH KOPI</span>
-          <span class="text-[10px] text-neutral-500">TANGERANG SELATAN &bull; 09.00 - 21.00 WIB</span>
+          <span class="text-[10px] text-neutral-500">WA: 0811-8143-532 &bull; TANGERANG SELATAN</span>
         </div>
       </div>
 
@@ -325,7 +328,7 @@
         <span>&bull;</span>
         <a href="#qris-section" class="hover:text-white transition-colors">QRIS</a>
         <span>&bull;</span>
-        <a href="https://www.instagram.com/surahkopi/" target="_blank" class="hover:text-white transition-colors">@surahkopi</a>
+        <a href="https://wa.me/628118143532" target="_blank" class="hover:text-white transition-colors">WhatsApp Kedai</a>
       </div>
 
       <div class="text-neutral-500 text-center md:text-right">
@@ -488,7 +491,7 @@
       </div>
 
       <!-- Item List with Individual Customizations -->
-      <div id="cart-modal-items" class="space-y-1 max-h-52 overflow-y-auto pr-1">
+      <div id="cart-modal-items" class="space-y-1 max-h-48 overflow-y-auto pr-1">
         <!-- Rendered by app.js -->
       </div>
 
@@ -534,44 +537,65 @@
         <!-- Origin Location Card -->
         <div class="p-2.5 rounded-xl bg-neutral-900/80 border border-neutral-800 flex items-center justify-between">
           <div>
-            <span class="text-[10px] text-neutral-500 uppercase block">Titik Penjemputan (Origin):</span>
-            <strong class="text-white text-xs">📍 Surah Kopi Tangerang Selatan (Ciputat)</strong>
+            <span class="text-[10px] text-neutral-500 uppercase block font-mono">Titik Asal / Penjemputan (Kedai):</span>
+            <strong class="text-white text-xs font-mono">☕ Surah Kopi - Tangerang Selatan (Ciputat)</strong>
           </div>
-          <span class="px-2 py-0.5 rounded bg-white/10 text-neutral-300 text-[10px]">Tersedia</span>
+          <span class="px-2 py-0.5 rounded bg-white/10 text-neutral-300 font-mono text-[10px]">Toko Asal</span>
         </div>
 
-        <!-- Destination Selector for GoSend / Grab -->
-        <div id="destination-selector-container" class="space-y-1.5">
-          <label class="block text-neutral-300 font-bold">Pilih Wilayah Tujuan Antar (Destination):</label>
-          <select id="delivery-destination-select" onchange="handleDestinationChange()" class="w-full px-3 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white focus:outline-none focus:border-white text-xs">
-            <!-- Populated by app.js -->
-          </select>
-        </div>
+        <!-- DYNAMIC DESTINATION MAP SECTION (NOT HARDCODED) -->
+        <div id="map-delivery-section" class="space-y-3">
+          <div class="space-y-1 relative">
+            <div class="flex items-center justify-between">
+              <label class="block text-neutral-300 font-bold font-mono">Cari Alamat Tujuan via Peta Google / OSM:</label>
+              <button type="button" onclick="useCurrentGpsLocation()" class="text-[11px] font-mono text-neutral-300 hover:text-white underline flex items-center gap-1">
+                <span>📍 Gunakan GPS Saya</span>
+              </button>
+            </div>
+            
+            <!-- Address Search Input with Autocomplete -->
+            <div class="relative">
+              <input type="text" id="address-search-input" oninput="handleAddressSearchInput(this.value)" placeholder="Ketik nama jalan, komplek, atau kelurahan..." class="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white placeholder-neutral-600 focus:outline-none focus:border-white text-xs font-mono">
+              <div id="search-results-dropdown" class="autocomplete-dropdown hidden"></div>
+            </div>
+          </div>
 
-        <!-- Custom KM input (Hidden by default, shown when custom selected) -->
-        <div id="custom-km-container" class="hidden space-y-1">
-          <label class="block text-neutral-400 text-[11px]">Masukkan Perkiraan Jarak (Kilometer):</label>
-          <div class="flex items-center gap-2">
-            <input type="number" id="custom-km-input" value="5.0" step="0.5" min="1" max="30" oninput="handleManualKmInput(this.value)" class="w-24 px-3 py-2 rounded-xl bg-neutral-900 border border-neutral-800 text-white text-xs">
-            <span class="text-neutral-400 text-xs">KM dari kedai Surah Kopi</span>
+          <!-- Interactive Leaflet Map -->
+          <div class="relative">
+            <div id="map-container"></div>
+            <div class="absolute bottom-2 left-2 z-[500] px-2.5 py-1 rounded-lg bg-black/85 border border-white/20 text-[10px] font-mono text-neutral-300 backdrop-blur-md">
+              Geser pin 📍 ke titik antar Anda
+            </div>
+          </div>
+
+          <!-- Distance and Google Maps Direct Link -->
+          <div class="p-3 rounded-xl bg-neutral-900/90 border border-white/10 flex items-center justify-between text-xs font-mono">
+            <div>
+              <span class="text-neutral-400 block text-[10px]">Estimasi Jarak Rute Nyata:</span>
+              <strong id="live-distance-badge" class="text-white text-sm">3.5 km</strong>
+            </div>
+            <a id="gmaps-route-btn" href="#" target="_blank" class="px-3 py-1.5 rounded-lg border border-white/20 hover:border-white text-white text-[11px] flex items-center gap-1.5 transition-all">
+              <span>🗺️ Buka di Google Maps</span>
+              <svg class="w-3 h-3 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+            </a>
           </div>
         </div>
 
-        <!-- Detailed Address Field -->
+        <!-- Detailed Address Textarea -->
         <div id="address-field-container">
-          <label class="block text-neutral-300 mb-1 font-bold">Alamat Lengkap Tujuan <span class="text-neutral-500">(Patokan, Nomor Rumah, RT/RW)</span></label>
+          <label class="block text-neutral-300 mb-1 font-bold">Alamat Lengkap Pengantaran <span class="text-neutral-500">(Patokan, Nomor Rumah, RT/RW)</span></label>
           <textarea id="cust-address" rows="2" placeholder="Contoh: Jl. Menjangan No. 10, Pondok Ranji, Ciputat Timur (Rumah pagar hitam sebelah warung)" class="w-full px-3 py-2 rounded-xl bg-neutral-900 border border-neutral-800 text-white placeholder-neutral-600 focus:outline-none focus:border-white text-xs"></textarea>
         </div>
 
         <!-- Global Note -->
         <div>
           <label class="block text-neutral-300 mb-1 font-bold">Catatan Tambahan (Opsional)</label>
-          <input type="text" id="cust-global-note" placeholder="Misal: Mohon panggilkan kurir secepatnya ya barista" class="w-full px-3 py-2 rounded-xl bg-neutral-900 border border-neutral-800 text-white placeholder-neutral-600 focus:outline-none focus:border-white text-xs">
+          <input type="text" id="cust-global-note" placeholder="Misal: Tolong titipkan di pos satpam depan ya" class="w-full px-3 py-2 rounded-xl bg-neutral-900 border border-neutral-800 text-white placeholder-neutral-600 focus:outline-none focus:border-white text-xs">
         </div>
 
         <!-- Tariff Formula Info -->
         <div id="delivery-formula-info" class="text-[11px] text-neutral-400 bg-neutral-900/50 p-2.5 rounded-xl border border-white/5">
-          Tarif GoSend / Grab otomatis dikalkulasi sesuai ketentuan resmi jarak kilometer.
+          Tarif kurir otomatis dihitung berdasarkan jarak rute jalan raya dari Surah Kopi ke titik Anda.
         </div>
 
         <!-- Price Breakdown -->
